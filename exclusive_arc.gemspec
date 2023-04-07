@@ -3,7 +3,7 @@
 require_relative "lib/exclusive_arc/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "exclusive-arc"
+  spec.name = "activerecord-exclusive-arc"
   spec.version = ExclusiveArc::VERSION
   spec.authors = ["justin talbott"]
   spec.email = ["gmail@justintalbott.com"]

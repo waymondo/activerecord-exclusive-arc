@@ -9,7 +9,7 @@ require "minitest/autorun"
 require "minitest/spec"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "exclusive-arc"
+require "activerecord-exclusive-arc"
 
 require "active_model/railtie"
 require "active_record/railtie"
