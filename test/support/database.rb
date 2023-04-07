@@ -10,13 +10,21 @@ ActiveRecord::Base.connection.tables.each do |table|
   ActiveRecord::Base.connection.drop_table(table, force: :cascade)
 end
 
+SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] != "sqlite3"
+
 ActiveRecord::Schema.define do
   create_table :governments do |t|
     t.string :name
   end
 
-  create_table :cities do |t|
-    t.string :name
+  if SUPPORTS_UUID
+    create_table :cities, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+      t.string :name
+    end
+  else
+    create_table :cities do |t|
+      t.string :name
+    end
   end
 
   create_table :counties do |t|

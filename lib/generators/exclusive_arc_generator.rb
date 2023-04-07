@@ -10,6 +10,13 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
   class_option :skip_foreign_key_indexes, type: :boolean, default: false
   class_option :skip_check_constraint, type: :boolean, default: false
 
+  Error = Class.new(StandardError)
+
+  def initialize(*args)
+    raise Error, "must supply an arc and at least two references" if args[0].size <= 3
+    super
+  end
+
   def create_exclusive_arc_migration
     migration_template(
       "migration.rb.erb",
@@ -36,6 +43,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
     def add_reference(reference)
       string = "add_reference :#{table_name}, :#{reference}"
+      type = reference_type(reference)
+      string += ", type: :#{type}" unless /int/.match?(type.downcase)
       string += ", foreign_key: true" unless options[:skip_foreign_key_constraints]
       string += ", index: true" unless options[:skip_foreign_key_indexes]
       string
@@ -47,6 +56,13 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
     def migration_class_name
       [class_name.delete(":").singularize, arc.classify, "ExclusiveArc"].join
+    end
+
+    def reference_type(reference)
+      klass = reference.singularize.classify.constantize
+      klass.columns.find { |col| col.name == klass.primary_key }.sql_type
+    rescue
+      "bigint"
     end
 
     def check_constraint
@@ -61,7 +77,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def references
-      arguments.slice(1, arguments.length - 1)
+      @references ||= arguments.slice(1, arguments.length - 1)
     end
 
     def model_file_path
