@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "lib/exclusive_arc/version"
 
 Gem::Specification.new do |spec|
