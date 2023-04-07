@@ -21,13 +21,23 @@ class GeneratorTest < Rails::Generators::TestCase
   test "it generates an exclusive arc migration and injects into model" do
     run_generator %w[Government region city county state]
     assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
-      assert_match(/add_reference :governments, :city, foreign_key: true, index: true/, migration)
+      if SUPPORTS_UUID
+        assert_match(/add_reference :governments, :city, type: :uuid, foreign_key: true, index: true/, migration)
+      else
+        assert_match(/add_reference :governments, :city, foreign_key: true, index: true/, migration)
+      end
       assert_match(/add_reference :governments, :county, foreign_key: true, index: true/, migration)
       assert_match(/add_reference :governments, :state, foreign_key: true, index: true/, migration)
       assert_match(/add_check_constraint\(\n(\s*):governments/, migration)
     end
     assert_file "app/models/government.rb", /include ExclusiveArc::Model/
     assert_file "app/models/government.rb", /exclusive_arc region: \[:city, :county, :state\]/
+  end
+
+  test "it raises an error if generator not given enough arguments" do
+    assert_raises(ExclusiveArcGenerator::Error) do
+      run_generator ["Government", "region", "city"]
+    end
   end
 
   test "it can opt out of foreign key constraints" do
