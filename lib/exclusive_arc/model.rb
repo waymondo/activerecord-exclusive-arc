@@ -9,7 +9,8 @@ module ExclusiveArc
 
     class_methods do
       def exclusive_arc(*arcs)
-        arcs.each do |name, options|
+        arcs = arcs[0].is_a?(Hash) ? arcs[0] : {arcs[0] => arcs[1]}
+        arcs.each do |(name, options)|
           exclusive_arcs << {name => options}
 
           options.each do |option|
