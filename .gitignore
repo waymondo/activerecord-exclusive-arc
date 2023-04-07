@@ -2,3 +2,4 @@
 /*.gem
 /tmp/
 /log/
+/exclusive_arc

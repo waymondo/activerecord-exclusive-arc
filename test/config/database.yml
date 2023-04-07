@@ -1,5 +1,5 @@
 default: &default
-  adapter: 'postgresql'
+  adapter: <%= ENV.fetch('DATABASE_ADAPTER', 'postgresql') %>
   database: 'exclusive_arc'
   host: 'localhost'
   port: null

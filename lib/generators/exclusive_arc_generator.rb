@@ -51,7 +51,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
     def check_constraint
       reference_checks = references.map do |reference|
-        "(#{reference}_id IS NOT NULL)::integer"
+        "CASE WHEN #{reference}_id IS NULL THEN 0 ELSE 1 END"
       end
       "(#{reference_checks.join(" + ")}) = 1"
     end
