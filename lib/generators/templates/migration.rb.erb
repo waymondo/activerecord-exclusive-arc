@@ -1,0 +1,10 @@
+class <%= migration_class_name %> < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    <% references.each do |reference| %><%= add_reference(reference) %>
+    <% end %><% unless options[:skip_check_constraint] %>add_check_constraint(
+      :<%= table_name %>,
+      "<%= check_constraint %>",
+      name: :<%= arc %>
+    )<% end %>
+  end
+end

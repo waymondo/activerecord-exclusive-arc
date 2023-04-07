@@ -54,6 +54,15 @@ class ModelTest < ActiveSupport::TestCase
     government.save!
   end
 
+  test "bypassing callbacks raises check constraint error" do
+    county = County.create!(name: "Queens")
+    state = State.create!(name: "New York")
+    government = Government.create!(county: county)
+    assert_raises(ActiveRecord::StatementInvalid) do
+      government.update_column(:state_id, state.id)
+    end
+  end
+
   private
 
   def assert_arc_not_exclusive(government)
