@@ -3,7 +3,7 @@ module ExclusiveArc
     extend ActiveSupport::Concern
 
     included do
-      class_attribute :exclusive_arcs, default: []
+      class_attribute :exclusive_arcs, default: {}
       delegate :exclusive_arcs, to: :class
     end
 
@@ -11,7 +11,7 @@ module ExclusiveArc
       def exclusive_arc(*arcs)
         arcs = arcs[0].is_a?(Hash) ? arcs[0] : {arcs[0] => arcs[1]}
         arcs.each do |(name, options)|
-          exclusive_arcs << {name => options}
+          exclusive_arcs[name] = options
 
           options.each do |option|
             belongs_to option, optional: true
@@ -20,6 +20,10 @@ module ExclusiveArc
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{name}
               @name ||= (#{options.join(" || ")})
+            end
+
+            def #{name}=(#{name})
+              # TODO
             end
           RUBY
         end
@@ -32,7 +36,9 @@ module ExclusiveArc
 
     def validate_exclusive_arcs
       exclusive_arcs.each do |(arc, options)|
-        errors.add(arc, :arc_not_exclusive) unless options.count { |option| !!option } == 1
+        errors.add(arc, :arc_not_exclusive) unless options.count do |option|
+          !!public_send(option)
+        end == 1
       end
     end
   end

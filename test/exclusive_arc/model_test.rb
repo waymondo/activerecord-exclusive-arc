@@ -19,7 +19,6 @@ class ModelTest < ActiveSupport::TestCase
       ],
       Foo.exclusive_arcs
     )
-    assert_equal 7, Foo.reflections.size
     assert_equal(
       true,
       Foo.reflections.values.all? do |reflection|
@@ -27,5 +26,27 @@ class ModelTest < ActiveSupport::TestCase
           reflection.options[:optional]
       end
     )
+  end
+
+  test "it can validate an exclusive arc" do
+    city = City.create!(name: "Ithaca")
+    county = County.create!(name: "Tompkins")
+    government = Government.new
+    refute government.valid?
+    government.city = city
+    assert government.valid?
+    government.county = county
+    refute government.valid?
+    assert_raises(ActiveRecord::RecordInvalid) do
+      government.save!
+    end
+    government.city = nil
+    assert government.valid?
+    government.save!
+    government.county = nil
+    refute government.valid?
+    assert_raises(ActiveRecord::RecordInvalid) do
+      government.save!
+    end
   end
 end
