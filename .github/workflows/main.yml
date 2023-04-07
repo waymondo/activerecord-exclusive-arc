@@ -35,7 +35,6 @@ jobs:
         database_adapter:
           - sqlite3
           - postgresql
-          - wat
 
     steps:
       - uses: actions/checkout@v3
