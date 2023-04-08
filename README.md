@@ -49,7 +49,7 @@ This will inject code into your `Comment` Model:
 ```ruby
 class Comment < ApplicationRecord
   include ExclusiveArc::Model
-  exclusive_arc commentable: [:post, :comment]
+  exclusive_arc :commentable, [:post, :comment]
 end
 ```
 
@@ -93,6 +93,8 @@ The check constraint ensures `ActiveRecord` validations can’t be bypassed to b
 Can Only Be One™️". Traditional foreign key constraints can be used and the partial indexes provide improved
 lookup performance for each individual polymorphic assoication.
 
+### Exclusive Arc Options
+
 Some options are available to the generator command. You can see them with:
 
 ```
@@ -103,6 +105,7 @@ Usage:
 Options:
   [--skip-namespace], [--no-skip-namespace]                              # Skip namespace (affects only isolated engines)
   [--skip-collision-check], [--no-skip-collision-check]                  # Skip collision check
+  [--optional], [--no-optional]                                          # Exclusive arc is optional
   [--skip-foreign-key-constraints], [--no-skip-foreign-key-constraints]  # Skip foreign key constraints
   [--skip-foreign-key-indexes], [--no-skip-foreign-key-indexes]          # Skip foreign key partial indexes
   [--skip-check-constraint], [--no-skip-check-constraint]                # Skip check constraint
@@ -116,7 +119,9 @@ Runtime options:
 Adds an Exclusive Arc to an ActiveRecord model and generates the migration for it
 ```
 
-Of course, you can always edit the generated migration by hand instead.
+Notably, if you want to make an Exclusive Arc optional, you can use the `--optional` flag. This will adjust
+the definition in your `ActiveRecord` model and loosen both the validation and database check constraint so
+that there can be 0 or 1 foreign keys set for the polymorphic association.
 
 ### Compatibility
 

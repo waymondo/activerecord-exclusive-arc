@@ -6,6 +6,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
   desc "Adds an Exclusive Arc to an ActiveRecord model and generates the migration for it"
 
   argument :arguments, type: :array, default: [], banner: "arc belongs_to1 belongs_to2 ..."
+  class_option :optional, type: :boolean, default: false, desc: "Exclusive arc is optional"
   class_option :skip_foreign_key_constraints, type: :boolean, default: false, desc: "Skip foreign key constraints"
   class_option :skip_foreign_key_indexes, type: :boolean, default: false, desc: "Skip foreign key partial indexes"
   class_option :skip_check_constraint, type: :boolean, default: false, desc: "Skip check constraint"
@@ -38,7 +39,9 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
   no_tasks do
     def model_exclusive_arcs
-      "#{arc}: [#{belong_tos.map { |reference| ":#{reference}" }.join(", ")}]"
+      string = ":#{arc}, [#{belong_tos.map { |reference| ":#{reference}" }.join(", ")}]"
+      string += ", optional: true" if options[:optional]
+      string
     end
 
     def add_reference(reference)
@@ -69,7 +72,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       reference_checks = belong_tos.map do |reference|
         "CASE WHEN #{reference}_id IS NULL THEN 0 ELSE 1 END"
       end
-      "(#{reference_checks.join(" + ")}) = 1"
+      condition = options[:optional] ? "<= 1" : "= 1"
+      "(#{reference_checks.join(" + ")}) #{condition}"
     end
 
     def arc
