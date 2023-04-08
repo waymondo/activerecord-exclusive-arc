@@ -38,19 +38,20 @@ end
 
 class Government < ActiveRecord::Base
   include ExclusiveArc::Model
+  belongs_to :city, -> { where.not(name: nil) }, optional: true
   has_exclusive_arc(:region, %i[city county state])
 end
 
 class City < ActiveRecord::Base
-  has_many :geometries, dependent: :destroy
+  has_many :governments, dependent: :destroy
 end
 
 class County < ActiveRecord::Base
-  has_many :geometries, dependent: :destroy
+  has_many :governments, dependent: :destroy
 end
 
 class State < ActiveRecord::Base
-  has_many :geometries, dependent: :destroy
+  has_many :governments, dependent: :destroy
 end
 
 def migrate_exclusive_arc(args)
