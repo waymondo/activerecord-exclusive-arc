@@ -38,7 +38,7 @@ end
 
 class Government < ActiveRecord::Base
   include ExclusiveArc::Model
-  exclusive_arc(:region, %i[city county state])
+  has_exclusive_arc(:region, %i[city county state])
 end
 
 class City < ActiveRecord::Base

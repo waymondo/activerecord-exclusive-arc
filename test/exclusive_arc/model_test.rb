@@ -3,11 +3,9 @@ require "test_helper"
 class ModelTest < ActiveSupport::TestCase
   class Foo < ActiveRecord::Base
     include ExclusiveArc::Model
-    exclusive_arc(
-      bar: [:baz, :bizz],
-      buzz: [:bing, :bong]
-    )
-    exclusive_arc :one, %i[two three four], optional: true
+    has_exclusive_arc :bar, [:baz, :bizz]
+    has_exclusive_arc :buzz, [:bing, :bong]
+    has_exclusive_arc :one, %i[two three four], optional: true
   end
 
   test "it can register exclusive arcs and inherent relationships" do
@@ -67,6 +65,14 @@ class ModelTest < ActiveSupport::TestCase
     government.state = nil
     government.county = county
     assert_equal county, government.region
+    assert government.valid?
+    government.save!
+    government.assign_attributes(
+      state: state,
+      county: nil
+    )
+    assert_equal state, government.region
+    assert government.valid?
     government.save!
   end
 

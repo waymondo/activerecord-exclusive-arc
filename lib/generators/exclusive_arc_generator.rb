@@ -32,7 +32,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       class_name.demodulize,
       <<~RB
         #{indents}include ExclusiveArc::Model
-        #{indents}exclusive_arc #{model_exclusive_arcs}
+        #{indents}has_exclusive_arc #{model_exclusive_arcs}
       RB
     )
   end

@@ -8,26 +8,34 @@ module ExclusiveArc
     end
 
     class_methods do
-      def exclusive_arc(*args)
-        arcs = args[0].is_a?(Hash) ? args[0] : {args[0] => args[1]}
-        options = args[2] || {}
-        arcs.each do |(name, belong_tos)|
-          belong_tos.map { |option| belongs_to(option, optional: true) }
-          exclusive_arcs[name] = Definition.new(
-            reflections: reflections.slice(*belong_tos.map(&:to_s)),
-            options: options
-          )
+      def has_exclusive_arc(*args)
+        arc = args[0]
+        belong_tos = args[1]
+        belong_tos.map { |option| belongs_to(option, optional: true) }
+        exclusive_arcs[arc] = Definition.new(
+          reflections: reflections.slice(*belong_tos.map(&:to_s)),
+          options: args[2] || {}
+        )
 
+        belong_tos.each do |option|
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
-            def #{name}
-              #{belong_tos.join(" || ")}
-            end
-
-            def #{name}=(polymorphic)
-              assign_exclusive_arc(:#{name}, polymorphic)
+            def #{option}=(polymorphic)
+              @#{arc} = nil unless @#{arc} == polymorphic
+              super
             end
           RUBY
         end
+
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          def #{arc}
+            @#{arc} ||= (#{belong_tos.join(" || ")})
+          end
+
+          def #{arc}=(polymorphic)
+            assign_exclusive_arc(:#{arc}, polymorphic)
+            @#{arc} = polymorphic
+          end
+        RUBY
 
         validate :validate_exclusive_arcs
       end
@@ -36,9 +44,10 @@ module ExclusiveArc
     private
 
     def assign_exclusive_arc(arc, polymorphic)
-      exclusive_arcs.fetch(arc).reflections.each do |name, reflection|
-        public_send("#{name}=", polymorphic.is_a?(reflection.klass) ? polymorphic : nil)
+      attributes = exclusive_arcs.fetch(arc).reflections.to_h do |name, reflection|
+        [name, polymorphic.is_a?(reflection.klass) ? polymorphic : nil]
       end
+      assign_attributes attributes
     end
 
     def validate_exclusive_arcs
