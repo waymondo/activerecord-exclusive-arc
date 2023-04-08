@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 gem "debug"
 gem "minitest"
-gem "rails", ">= 6.1"
+gem "rails", "~> #{ENV.fetch("RAILS_VERSION", "7.0")}"
 gem "rake"
 gem "pg"
 gem "sqlite3"
