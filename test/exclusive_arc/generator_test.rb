@@ -22,12 +22,12 @@ class GeneratorTest < Rails::Generators::TestCase
     run_generator %w[Government region city county state]
     assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
       if SUPPORTS_UUID
-        assert_match(/add_reference :governments, :city, type: :uuid, foreign_key: true, index: true/, migration)
+        assert_match(/add_reference :governments, :city, type: :uuid, foreign_key: true, index:/, migration)
       else
-        assert_match(/add_reference :governments, :city, foreign_key: true, index: true/, migration)
+        assert_match(/add_reference :governments, :city, foreign_key: true, index:/, migration)
       end
-      assert_match(/add_reference :governments, :county, foreign_key: true, index: true/, migration)
-      assert_match(/add_reference :governments, :state, foreign_key: true, index: true/, migration)
+      assert_match(/add_reference :governments, :county, foreign_key: true, index:/, migration)
+      assert_match(/add_reference :governments, :state, foreign_key: true, index:/, migration)
       assert_match(/add_check_constraint\(\n(\s*):governments/, migration)
     end
     assert_file "app/models/government.rb", /include ExclusiveArc::Model/
@@ -50,7 +50,7 @@ class GeneratorTest < Rails::Generators::TestCase
   test "it can opt out of foreign key indexes" do
     run_generator ["Government", "region", "city", "county", "state", "--skip-foreign-key-indexes"]
     assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
-      refute_match(/index: true/, migration)
+      refute_match(/index:/, migration)
     end
   end
 

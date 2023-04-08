@@ -46,7 +46,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       type = reference_type(reference)
       string += ", type: :#{type}" unless /int/.match?(type.downcase)
       string += ", foreign_key: true" unless options[:skip_foreign_key_constraints]
-      string += ", index: true" unless options[:skip_foreign_key_indexes]
+      # TODO: this
+      string += ", index: {where: \"#{reference}_id IS NOT NULL\"}" unless options[:skip_foreign_key_indexes]
       string
     end
 
