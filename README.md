@@ -5,14 +5,14 @@ models.
 
 ### Doesn’t Rails already provide this?
 
-It does, but there are decent arguments against the typical Rails way of doing polymorphism. Consider the
-fact that the ruby class name is stored in the database as a string. If you want to change the name of the
+It does, but there are decent arguments against the default Rails way of doing polymorphism. Consider the
+fact that the Ruby class name is stored in the database as a string. If you want to change the name of the
 Ruby class used for such reasons, you must also update the database strings that represent it. The bleeding
 of application-layer definitions into the database may become a liability.
 
 Another common argument concerns referential integrity. *Foreign Key Constraints* are a common mechanism to
 ensure primary keys of tables can be reliably used as foreign keys on others. This becomes harder to enforce
-when a column that represents a Rails class is one of the components required for unique identification.
+when a column that represents a Ruby class is one of the components required for unique identification.
 
 There are also quality of life considerations, such as not being able to eager-load the `belongs_to ...
 polymorphic: true` relationship and the fact that polymorphic indexes require multiple columns.
@@ -89,9 +89,9 @@ class CommentCommentableExclusiveArc < ActiveRecord::Migration[7.0]
 end
 ```
 
-The database chekc constraint ensures `ActiveRecord` validations can’t be bypassed to break the fabeled
-rule - "There Can Only Be One™️". Traditional foreign key constraints can be used and the partial indexes
-provide improved lookup performance for each individual polymorphic assoication.
+The check constraint ensures `ActiveRecord` validations can’t be bypassed to break the fabeled rule - "There
+Can Only Be One™️". Traditional foreign key constraints can be used and the partial indexes provide improved
+lookup performance for each individual polymorphic assoication.
 
 Some options are available to the generator command. You can see them with:
 
@@ -117,6 +117,11 @@ Adds an Exclusive Arc to an ActiveRecord model and generates the migration for i
 ```
 
 Of course, you can always edit the generated migration by hand instead.
+
+### Compatibility
+
+Currently `activerecord-exclusive-arc` is tested against a matrix of Ruby 2.7 and 3.2, Rails 6.1 and 7.0, and
+`postgresql` and `sqlite3` database adapters.
 
 ### Contributing
 
