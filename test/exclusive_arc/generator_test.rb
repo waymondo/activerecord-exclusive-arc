@@ -33,7 +33,7 @@ class GeneratorTest < Rails::Generators::TestCase
       assert_match(/\(CASE(.*)\) = 1/, migration)
     end
     assert_file "app/models/government.rb", /include ExclusiveArc::Model/
-    assert_file "app/models/government.rb", /exclusive_arc :region, \[:city, :county, :state\]/ do |file|
+    assert_file "app/models/government.rb", /has_exclusive_arc :region, \[:city, :county, :state\]/ do |file|
       refute_match(/optional/, file)
     end
   end
@@ -43,7 +43,7 @@ class GeneratorTest < Rails::Generators::TestCase
     assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
       assert_match(/\(CASE(.*)\) <= 1/, migration)
     end
-    assert_file "app/models/government.rb", /exclusive_arc :region, \[:city, :county, :state\], optional: true/
+    assert_file "app/models/government.rb", /has_exclusive_arc :region, \[:city, :county, :state\], optional: true/
   end
 
   test "it raises an error if generator not given enough arguments" do

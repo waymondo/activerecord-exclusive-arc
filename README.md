@@ -49,7 +49,7 @@ This will inject code into your `Comment` Model:
 ```ruby
 class Comment < ApplicationRecord
   include ExclusiveArc::Model
-  exclusive_arc :commentable, [:post, :comment]
+  has_exclusive_arc :commentable, [:post, :comment]
 end
 ```
 
