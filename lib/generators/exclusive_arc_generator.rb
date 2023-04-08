@@ -3,17 +3,17 @@ require "rails/generators/active_record/migration/migration_generator"
 
 class ExclusiveArcGenerator < ActiveRecord::Generators::Base
   source_root File.expand_path("templates", __dir__)
-  desc "Adds an exclusive arc to a model and generates the necessary migration"
+  desc "Adds an Exclusive Arc to an ActiveRecord model and generates the migration for it"
 
-  argument :arguments, type: :array, default: [], banner: "arc reference1 reference2 ..."
-  class_option :skip_foreign_key_constraints, type: :boolean, default: false
-  class_option :skip_foreign_key_indexes, type: :boolean, default: false
-  class_option :skip_check_constraint, type: :boolean, default: false
+  argument :arguments, type: :array, default: [], banner: "arc belongs_to1 belongs_to2 ..."
+  class_option :skip_foreign_key_constraints, type: :boolean, default: false, desc: "Skip foreign key constraints"
+  class_option :skip_foreign_key_indexes, type: :boolean, default: false, desc: "Skip foreign key partial indexes"
+  class_option :skip_check_constraint, type: :boolean, default: false, desc: "Skip check constraint"
 
   Error = Class.new(StandardError)
 
   def initialize(*args)
-    raise Error, "must supply an arc and at least two references" if args[0].size <= 3
+    raise Error, "must supply a Model, arc, and at least two belong_tos" if args[0].size <= 3
     super
   end
 
@@ -38,7 +38,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
   no_tasks do
     def model_exclusive_arcs
-      "#{arc}: [#{references.map { |reference| ":#{reference}" }.join(", ")}]"
+      "#{arc}: [#{belong_tos.map { |reference| ":#{reference}" }.join(", ")}]"
     end
 
     def add_reference(reference)
@@ -46,7 +46,6 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       type = reference_type(reference)
       string += ", type: :#{type}" unless /int/.match?(type.downcase)
       string += ", foreign_key: true" unless options[:skip_foreign_key_constraints]
-      # TODO: this
       string += ", index: {where: \"#{reference}_id IS NOT NULL\"}" unless options[:skip_foreign_key_indexes]
       string
     end
@@ -67,7 +66,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def check_constraint
-      reference_checks = references.map do |reference|
+      reference_checks = belong_tos.map do |reference|
         "CASE WHEN #{reference}_id IS NULL THEN 0 ELSE 1 END"
       end
       "(#{reference_checks.join(" + ")}) = 1"
@@ -77,8 +76,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       arguments[0]
     end
 
-    def references
-      @references ||= arguments.slice(1, arguments.length - 1)
+    def belong_tos
+      @belong_tos ||= arguments.slice(1, arguments.length - 1)
     end
 
     def model_file_path
