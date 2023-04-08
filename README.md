@@ -10,7 +10,7 @@ fact that the Ruby class name is stored in the database as a string. If you want
 Ruby class used for such reasons, you must also update the database strings that represent it. The bleeding
 of application-layer definitions into the database may become a liability.
 
-Another common argument concerns referential integrity. *Foreign Key Constraints* are a common mechanism to
+Another common argument concerns referential integrity. _Foreign Key Constraints_ are a common mechanism to
 ensure primary keys of tables can be reliably used as foreign keys on others. This becomes harder to enforce
 when a column that represents a Ruby class is one of the components required for unique identification.
 
@@ -19,8 +19,8 @@ polymorphic: true` relationship and the fact that polymorphic indexes require mu
 
 ### So how does this work?
 
-It reduces the boilerplate of managing a *Polymorphic Assication* modeled as a pattern called an *Exclusive
-Arc*. This maps nicely to a database constraint, a set of optional `belongs_to` relationships, some
+It reduces the boilerplate of managing a _Polymorphic Assication_ modeled as a pattern called an _Exclusive
+Arc_. This maps nicely to a database constraint, a set of optional `belongs_to` relationships, some
 polymorphic methods, and an `ActiveRecord` validation for good measure.
 
 ## How to use
@@ -72,6 +72,17 @@ end
 ```
 
 It's a bit more involved than that, but it demonstrates the essense of the API as an `ActiveRecord` user.
+
+If you need to customize a specific `belongs_to` relationship, you can do so by declaring it before
+`has_exclusive_arc`:
+
+```ruby
+class Comment < ApplicationRecord
+  include ExclusiveArc::Model
+  belongs_to :post, -> { where(comments_enabled: true) }, optional: true
+  has_exclusive_arc :commentable, [:post, :comment]
+end
+```
 
 Continuing with our example, the generator command would also produce a migration that looks like this:
 
@@ -135,4 +146,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/waymon
 ### License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-

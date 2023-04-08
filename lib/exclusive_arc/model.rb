@@ -11,7 +11,11 @@ module ExclusiveArc
       def has_exclusive_arc(*args)
         arc = args[0]
         belong_tos = args[1]
-        belong_tos.map { |option| belongs_to(option, optional: true) }
+        belong_tos.map do |option|
+          next if reflections[option.to_s]
+
+          belongs_to(option, optional: true)
+        end
         exclusive_arcs[arc] = Definition.new(
           reflections: reflections.slice(*belong_tos.map(&:to_s)),
           options: args[2] || {}
