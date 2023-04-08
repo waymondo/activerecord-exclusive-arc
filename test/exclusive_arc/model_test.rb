@@ -7,20 +7,23 @@ class ModelTest < ActiveSupport::TestCase
       bar: [:baz, :bizz],
       buzz: [:bing, :bong]
     )
-    exclusive_arc :one, %i[two three four]
+    exclusive_arc :one, %i[two three four], optional: true
   end
 
   test "it can register exclusive arcs and inherent relationships" do
     assert_equal(%i[bar buzz one], Foo.exclusive_arcs.keys)
-    belong_tos = Foo.exclusive_arcs.values.map(&:values).flatten
-    assert_equal 7, belong_tos.size
+    reflections =
+      Foo.exclusive_arcs.values.map { |definition| definition.reflections }.map(&:values).flatten
+    assert_equal 7, reflections.size
     assert_equal(
       true,
-      belong_tos.all? do |reflection|
+      reflections.all? do |reflection|
         reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection) &&
           reflection.options[:optional]
       end
     )
+    refute Foo.exclusive_arcs.fetch(:bar).options[:optional]
+    assert Foo.exclusive_arcs.fetch(:one).options[:optional]
   end
 
   test "it can validate an exclusive arc" do
@@ -37,6 +40,19 @@ class ModelTest < ActiveSupport::TestCase
     government.save!
     government.county = nil
     assert_arc_not_exclusive(government)
+  end
+
+  test "it can validate an optional exclusive arc" do
+    city = City.create!(name: "Ithaca")
+    county = County.create!(name: "Tompkins")
+    government = Government.new
+    government.exclusive_arcs.fetch(:region).stub :options, {optional: true} do
+      assert government.valid?
+      government.city = city
+      assert government.valid?
+      government.county = county
+      refute government.valid?
+    end
   end
 
   test "it can assign and return polymorphic association" do

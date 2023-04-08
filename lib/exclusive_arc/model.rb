@@ -8,16 +8,19 @@ module ExclusiveArc
     end
 
     class_methods do
-      def exclusive_arc(*arcs)
-        arcs = arcs[0].is_a?(Hash) ? arcs[0] : {arcs[0] => arcs[1]}
-
-        arcs.each do |(name, options)|
-          options.map { |option| belongs_to(option, optional: true) }
-          exclusive_arcs[name] = reflections.slice(*options.map(&:to_s))
+      def exclusive_arc(*args)
+        arcs = args[0].is_a?(Hash) ? args[0] : {args[0] => args[1]}
+        options = args[2] || {}
+        arcs.each do |(name, belong_tos)|
+          belong_tos.map { |option| belongs_to(option, optional: true) }
+          exclusive_arcs[name] = Definition.new(
+            reflections: reflections.slice(*belong_tos.map(&:to_s)),
+            options: options
+          )
 
           class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{name}
-              #{options.join(" || ")}
+              #{belong_tos.join(" || ")}
             end
 
             def #{name}=(polymorphic)
@@ -33,17 +36,16 @@ module ExclusiveArc
     private
 
     def assign_exclusive_arc(arc, polymorphic)
-      exclusive_arcs[arc].each do |name, reflection|
-        # TODO: handle polymorphic relationships where the same AR class is used
+      exclusive_arcs.fetch(arc).reflections.each do |name, reflection|
         public_send("#{name}=", polymorphic.is_a?(reflection.klass) ? polymorphic : nil)
       end
     end
 
     def validate_exclusive_arcs
-      exclusive_arcs.each do |(arc, options)|
-        errors.add(arc, :arc_not_exclusive) unless options.keys.count do |name|
-          !!public_send(name)
-        end == 1
+      exclusive_arcs.each do |(arc, definition)|
+        foreign_key_count = definition.reflections.keys.count { |name| !!public_send(name) }
+        valid = definition.options[:optional] ? foreign_key_count.in?([0, 1]) : foreign_key_count == 1
+        errors.add(arc, :arc_not_exclusive) unless valid
       end
     end
   end
