@@ -31,8 +31,14 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       model_file_path,
       class_name.demodulize,
       <<~RB
-        #{indents}include ExclusiveArc::Model
         #{indents}has_exclusive_arc #{model_exclusive_arcs}
+      RB
+    )
+    inject_into_class(
+      model_file_path,
+      class_name.demodulize,
+      <<~RB
+        #{indents}include ExclusiveArc::Model
       RB
     )
   end
@@ -44,12 +50,30 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       string
     end
 
+    def add_references
+      belong_tos.map do |reference|
+        add_reference(reference)
+      end.join("\n")
+    end
+
     def add_reference(reference)
-      string = "add_reference :#{table_name}, :#{reference}"
-      type = reference_type(reference)
-      string += ", type: :#{type}" unless /int/.match?(type.downcase)
-      string += ", foreign_key: true" unless options[:skip_foreign_key_constraints]
-      string += ", index: {where: \"#{reference}_id IS NOT NULL\"}" unless options[:skip_foreign_key_indexes]
+      foreign_key = foreign_key_name(reference)
+      type = reference_type(reference).downcase
+      if foreign_key == "#{reference}_id"
+        string = "    add_reference :#{table_name}, :#{reference}"
+        string += ", type: :#{type}" unless /int/.match?(type)
+        string += ", foreign_key: true" unless options[:skip_foreign_key_constraints]
+        string += ", index: {where: \"#{foreign_key} IS NOT NULL\"}" unless options[:skip_foreign_key_indexes]
+      else
+        string = "    add_column :#{table_name}, :#{foreign_key}, :#{type}"
+        unless options[:skip_foreign_key_constraints]
+          referenced_table_name = reference_table_name(reference)
+          string += "\n    add_foreign_key :#{table_name}, :#{referenced_table_name}, column: :#{foreign_key}"
+        end
+        unless options[:skip_foreign_key_indexes]
+          string += "\n    add_index :#{table_name}, :#{foreign_key}, where: \"#{foreign_key} IS NOT NULL\""
+        end
+      end
       string
     end
 
@@ -62,15 +86,38 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def reference_type(reference)
-      klass = reference.singularize.classify.constantize
+      klass = class_name.constantize.reflections[reference].klass
       klass.columns.find { |col| col.name == klass.primary_key }.sql_type
     rescue
       "bigint"
     end
 
+    def reference_table_name(reference)
+      class_name.constantize.reflections[reference].klass.table_name
+    rescue
+      reference.tableize
+    end
+
+    def foreign_key_name(reference)
+      class_name.constantize.reflections[reference].foreign_key
+    rescue
+      "#{reference}_id"
+    end
+
+    def add_check_constraint
+      return if options[:skip_check_constraint]
+      <<-RUBY
+    add_check_constraint(
+      :#{table_name},
+      "#{check_constraint}",
+      name: :#{arc}
+    )
+      RUBY
+    end
+
     def check_constraint
       reference_checks = belong_tos.map do |reference|
-        "CASE WHEN #{reference}_id IS NULL THEN 0 ELSE 1 END"
+        "CASE WHEN #{foreign_key_name(reference)} IS NULL THEN 0 ELSE 1 END"
       end
       condition = options[:optional] ? "<= 1" : "= 1"
       "(#{reference_checks.join(" + ")}) #{condition}"

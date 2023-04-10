@@ -37,8 +37,8 @@ ActiveRecord::Schema.define do
 end
 
 class Government < ActiveRecord::Base
-  include ExclusiveArc::Model
   belongs_to :city, -> { where.not(name: nil) }, optional: true
+  include ExclusiveArc::Model
   has_exclusive_arc(:region, %i[city county state])
 end
 
