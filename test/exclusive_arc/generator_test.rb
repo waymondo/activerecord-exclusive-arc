@@ -29,13 +29,23 @@ class GeneratorTest < Rails::Generators::TestCase
       assert_match(/add_reference :governments, :county, foreign_key: true, index:/, migration)
       assert_match(/add_reference :governments, :state, foreign_key: true, index:/, migration)
       assert_match(/add_check_constraint\(\n(\s*):governments/, migration)
-      assert_match(/add_check_constraint\(\n(\s*):governments/, migration)
       assert_match(/\(CASE(.*)\) = 1/, migration)
     end
     assert_file "app/models/government.rb", /include ExclusiveArc::Model/
-    assert_file "app/models/government.rb", /has_exclusive_arc :region, \[:city, :county, :state\]/ do |file|
-      refute_match(/optional/, file)
+    assert_file "app/models/government.rb", /has_exclusive_arc :region, \[:city, :county, :state\]/
+  end
+
+  test "it infers non traditional foreign key and builds appropriate migration" do
+    city_foreign_key = Government.reflections["city"].foreign_key
+    Government.reflections["city"].instance_variable_set(:@foreign_key, "foo_id")
+    run_generator %w[Government region city county state]
+    assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
+      assert_match(/add_column :governments, :foo_id/, migration)
+      assert_match(/add_foreign_key :governments, :cities, column: :foo_id/, migration)
+      assert_match(/add_index :governments, :foo_id, where: "foo_id IS NOT NULL"/, migration)
+      assert_match(/CASE WHEN foo_id IS NULL/, migration)
     end
+    Government.reflections["city"].instance_variable_set(:@foreign_key, city_foreign_key)
   end
 
   test "it generates an optional exclusive arc migration and model configuration" do
@@ -48,7 +58,7 @@ class GeneratorTest < Rails::Generators::TestCase
 
   test "it raises an error if generator not given enough arguments" do
     assert_raises(ExclusiveArcGenerator::Error) do
-      run_generator ["Government", "region", "city"]
+      run_generator %w[Government region city]
     end
   end
 
