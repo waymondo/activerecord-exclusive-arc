@@ -1,13 +1,15 @@
+CONNECTION = ActiveRecord::Base.connection
+
 def truncate_db
-  ActiveRecord::Base.connection.tables.each do |table|
-    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
+  CONNECTION.tables.each do |table|
+    CONNECTION.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
   end
 end
 
-ActiveRecord::Base.connection.tables.each do |table|
-  next unless ActiveRecord::Base.connection.table_exists?(table)
+CONNECTION.tables.each do |table|
+  next unless CONNECTION.table_exists?(table)
 
-  ActiveRecord::Base.connection.drop_table(table, force: :cascade)
+  CONNECTION.drop_table(table, force: :cascade)
 end
 
 SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] != "sqlite3"
@@ -54,12 +56,12 @@ class State < ActiveRecord::Base
   has_many :governments, dependent: :destroy
 end
 
-def migrate_exclusive_arc(args)
+def migrate_exclusive_arc(args, direction = :up)
   tmp_dir = File.expand_path("../../tmp", __dir__)
   FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
   Rails::Generators.invoke("exclusive_arc", args + ["--quiet"], destination_root: tmp_dir)
   Dir[File.join(tmp_dir, "db/migrate/*.rb")].sort.each { |file| require file }
-  [args[0].delete(":").classify, args[1].classify, "ExclusiveArc"].join.constantize.migrate(:up)
+  [args[0].delete(":").classify, args[1].classify, "ExclusiveArc"].join.constantize.migrate(direction)
 end
 
 migrate_exclusive_arc(%w[Government region city county state])

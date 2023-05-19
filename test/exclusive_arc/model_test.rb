@@ -95,6 +95,14 @@ class ModelTest < ActiveSupport::TestCase
     assert_equal [], Government.joins(:city)
   end
 
+  test "it can rollback migration" do
+    CONNECTION.transaction do
+      migrate_exclusive_arc(%w[Government region city county state], :down)
+
+      raise ActiveRecord::Rollback
+    end
+  end
+
   private
 
   def assert_arc_not_exclusive(government)
