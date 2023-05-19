@@ -110,7 +110,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     add_check_constraint(
       :#{table_name},
       "#{check_constraint}",
-      name: :#{arc}
+      name: "#{arc}"
     )
       RUBY
     end
