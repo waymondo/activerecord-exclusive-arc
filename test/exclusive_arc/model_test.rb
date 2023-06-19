@@ -97,7 +97,7 @@ class ModelTest < ActiveSupport::TestCase
 
   test "it can rollback migration" do
     CONNECTION.transaction do
-      migrate_exclusive_arc(%w[Government region city county state], :down)
+      TestMigration.migrate(:down)
 
       raise ActiveRecord::Rollback
     end

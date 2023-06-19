@@ -1,6 +1,7 @@
 class <%= migration_class_name %> < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
 <%= add_references %>
+<%= remove_check_constraint %>
 <%= add_check_constraint %>
   end
 end

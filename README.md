@@ -5,8 +5,7 @@ types of ActiveRecord models.
 
 ### Doesn’t Rails already provide a way to do this?
 
-Yeah but... [here’s a post about why this
-exists](https://waymondo.com/posts/are-exclusive-arcs-evil/).
+Yes but [here’s a post about why this exists](https://waymondo.com/posts/are-exclusive-arcs-evil/).
 
 ### So how does this work?
 
@@ -80,14 +79,14 @@ Continuing with our example, the generator command would also produce a migratio
 this:
 
 ```ruby
-class CommentCommentableExclusiveArc < ActiveRecord::Migration[7.0]
+class CommentCommentableExclusiveArcPostComment < ActiveRecord::Migration[7.0]
   def change
     add_reference :comments, :post, foreign_key: true, index: {where: "post_id IS NOT NULL"}
     add_reference :comments, :comment, foreign_key: true, index: {where: "comment_id IS NOT NULL"}
     add_check_constraint(
       :comments,
       "(CASE WHEN post_id IS NULL THEN 0 ELSE 1 END + CASE WHEN comment_id IS NULL THEN 0 ELSE 1 END) = 1",
-      name: :commentable
+      name: "commentable"
     )
   end
 end
@@ -118,6 +117,43 @@ Adds an Exclusive Arc to an ActiveRecord model and generates the migration for i
 Notably, if you want to make an Exclusive Arc optional, you can use the `--optional` flag. This will
 adjust the definition in your `ActiveRecord` model and loosen both the validation and database check
 constraint so that there can be 0 or 1 foreign keys set for the polymorphic reference.
+
+### Updating an existing exclusive arc
+
+If you need to add an additional polymorphic option to an existing exclusive arc, you can simply run
+the generator command again with the additional target. Existing references will be skipped and the
+check constraint will be removed and re-added in a reversible manner.
+
+```
+bin/rails g exclusive_arc Comment commentable post comment page
+```
+
+``` ruby
+class CommentCommentableExclusiveArcPostCommentPage < ActiveRecord::Migration[7.0]
+  def change
+    add_reference :comments, :page, foreign_key: true, index: {where: "page_id IS NOT NULL"}
+    remove_check_constraint(
+      :comments,
+      "(CASE WHEN post_id IS NULL THEN 0 ELSE 1 END + CASE WHEN comment_id IS NULL THEN 0 ELSE 1 END) = 1",
+      name: "commentable"
+    )
+    add_check_constraint(
+      :comments,
+      "(CASE WHEN post_id IS NULL THEN 0 ELSE 1 END + CASE WHEN comment_id IS NULL THEN 0 ELSE 1 END + CASE WHEN page_id IS NULL THEN 0 ELSE 1 END) = 1",
+      name: "commentable"
+    )
+  end
+end
+```
+
+The registration in the model will be updated as well.
+
+``` ruby
+class Comment < ApplicationRecord
+  include ExclusiveArc::Model
+  has_exclusive_arc :commentable, [:post, :comment, :page]
+end
+```
 
 ### Compatibility
 
