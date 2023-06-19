@@ -129,7 +129,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
     def remove_check_constraint
       return if options[:skip_check_constraint]
-      return unless existing_check_constraint
+      return unless existing_check_constraint&.expression
+
       <<-RUBY.chomp
     remove_check_constraint(
       :#{table_name},
