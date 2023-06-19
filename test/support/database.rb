@@ -36,6 +36,16 @@ ActiveRecord::Schema.define do
   create_table :states do |t|
     t.string :name
   end
+
+  create_table :posts
+
+  create_table :comments do |t|
+    t.bigint :post_id
+    t.check_constraint(
+      "(CASE WHEN post_id IS NULL THEN 0 ELSE 1 END) = 1",
+      name: "commentable"
+    )
+  end
 end
 
 class Government < ActiveRecord::Base
@@ -56,12 +66,26 @@ class State < ActiveRecord::Base
   has_many :governments, dependent: :destroy
 end
 
-def migrate_exclusive_arc(args, direction = :up)
+class Comment < ActiveRecord::Base
+  has_many :comments
+end
+
+class Post < ActiveRecord::Base
+  include ExclusiveArc::Model
+  has_many :comments
+  has_exclusive_arc :commentable, [:comment, :post]
+end
+
+def migrate_exclusive_arc(args)
   tmp_dir = File.expand_path("../../tmp", __dir__)
   FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
   Rails::Generators.invoke("exclusive_arc", args + ["--quiet"], destination_root: tmp_dir)
   Dir[File.join(tmp_dir, "db/migrate/*.rb")].sort.each { |file| require file }
-  [args[0].delete(":").classify, args[1].classify, "ExclusiveArc"].join.constantize.migrate(direction)
+  targets = args[2..]
+  (
+    [args[0].delete(":").classify, args[1].classify, "ExclusiveArc"] |
+    targets.map(&:classify)
+  ).join.constantize.migrate(:up)
 end
 
 migrate_exclusive_arc(%w[Government region city county state])

@@ -1,6 +1,10 @@
 require "test_helper"
 
 class ModelTest < ActiveSupport::TestCase
+  def setup
+    ActiveRecord::Base.descendants.each(&:reset_column_information)
+  end
+
   class Foo < ActiveRecord::Base
     include ExclusiveArc::Model
     belongs_to :bong, foreign_key: :bing_bong_id
@@ -97,7 +101,7 @@ class ModelTest < ActiveSupport::TestCase
 
   test "it can rollback migration" do
     CONNECTION.transaction do
-      migrate_exclusive_arc(%w[Government region city county state], :down)
+      GovernmentRegionExclusiveArcCityCountyState.migrate(:down)
 
       raise ActiveRecord::Rollback
     end

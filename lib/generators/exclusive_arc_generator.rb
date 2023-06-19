@@ -31,15 +31,20 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       model_file_path,
       class_name.demodulize,
       <<~RB
-        #{indents}has_exclusive_arc #{model_exclusive_arcs}
-      RB
-    )
-    inject_into_class(
-      model_file_path,
-      class_name.demodulize,
-      <<~RB
         #{indents}include ExclusiveArc::Model
       RB
+    )
+    gsub_file(
+      model_file_path,
+      /has_exclusive_arc :#{arc}(.*)$/,
+      ""
+    )
+    inject_into_file(
+      model_file_path,
+      <<~RB,
+        #{indents}has_exclusive_arc #{model_exclusive_arcs}
+      RB
+      after: "include ExclusiveArc::Model\n"
     )
   end
 
@@ -78,11 +83,22 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def migration_file_name
-      "#{class_name.delete(":").underscore}_#{arc}_exclusive_arc.rb"
+      "#{class_name.delete(":").underscore}_#{arc}_exclusive_arc_#{belong_tos.map(&:underscore).join("_")}.rb"
     end
 
     def migration_class_name
-      [class_name.delete(":").singularize, arc.classify, "ExclusiveArc"].join
+      (
+        [class_name.delete(":").singularize, arc.classify, "ExclusiveArc"] |
+        belong_tos.map(&:classify)
+      ).join
+    end
+
+    def existing_check_constraint
+      @existing_check_constraint ||=
+        class_name.constantize.connection.check_constraints(class_name.constantize.table_name)
+          .find { |constraint| constraint.name == arc }
+    rescue
+      nil
     end
 
     def reference_type(reference)
@@ -111,9 +127,21 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       "#{reference}_id"
     end
 
+    def remove_check_constraint
+      return if options[:skip_check_constraint]
+      return unless existing_check_constraint
+      <<-RUBY.chomp
+    remove_check_constraint(
+      :#{table_name},
+      "#{existing_check_constraint.expression.squish}",
+      name: "#{arc}"
+    )
+      RUBY
+    end
+
     def add_check_constraint
       return if options[:skip_check_constraint]
-      <<-RUBY
+      <<-RUBY.chomp
     add_check_constraint(
       :#{table_name},
       "#{check_constraint}",
