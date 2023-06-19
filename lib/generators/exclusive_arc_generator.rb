@@ -52,8 +52,8 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
 
     def add_references
       belong_tos.map do |reference|
-        add_reference(reference)
-      end.join("\n")
+        add_reference(reference) unless column_exists?(reference)
+      end.compact.join("\n")
     end
 
     def add_reference(reference)
@@ -96,6 +96,13 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
       class_name.constantize.reflections[reference].klass.table_name
     rescue
       reference.tableize
+    end
+
+    def column_exists?(reference)
+      foreign_key = foreign_key_name(reference)
+      class_name.constantize.column_names.include?(foreign_key)
+    rescue
+      false
     end
 
     def foreign_key_name(reference)

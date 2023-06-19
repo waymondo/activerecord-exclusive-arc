@@ -48,6 +48,17 @@ class GeneratorTest < Rails::Generators::TestCase
     Government.reflections["city"].instance_variable_set(:@foreign_key, city_foreign_key)
   end
 
+  test "it does not add reference when column already exists" do
+    Government.stub(:column_names, ["id", "name", "city_id"]) do
+      run_generator %w[Government region city county state]
+      assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
+        assert_match(/add_reference :governments, :county/, migration)
+        assert_match(/add_reference :governments, :state/, migration)
+        refute_match(/add_reference :governments, :city/, migration)
+      end
+    end
+  end
+
   test "it generates an optional exclusive arc migration and model configuration" do
     run_generator ["Government", "region", "city", "county", "state", "--optional"]
     assert_migration "db/migrate/government_region_exclusive_arc.rb" do |migration|
