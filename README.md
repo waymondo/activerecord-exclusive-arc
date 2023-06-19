@@ -146,6 +146,15 @@ class CommentCommentableExclusiveArcPostCommentPage < ActiveRecord::Migration[7.
 end
 ```
 
+The registration in the model will be updated as well.
+
+``` ruby
+class Comment < ApplicationRecord
+  include ExclusiveArc::Model
+  has_exclusive_arc :commentable, [:post, :comment, :page]
+end
+```
+
 ### Compatibility
 
 Currently `activerecord-exclusive-arc` is tested against a matrix of:
