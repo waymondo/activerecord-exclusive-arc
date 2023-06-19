@@ -5,16 +5,8 @@ types of ActiveRecord models.
 
 ### Doesn’t Rails already provide a way to do this?
 
-It does, but there are decent arguments against the default Rails way of doing polymorphism.
-Consider the fact that the Ruby class name is stored in the database as a string. If you want to
-change the name of the Ruby class used for such reasons, you must also update the database strings
-that represent it. The seeping of application-layer definitions into the database may become a
-liability.
-
-Another common argument concerns referential integrity. _Foreign Key Constraints_ are a common
-mechanism to ensure primary keys of database tables can be reliably used as foreign keys on others.
-This becomes harder to enforce in the databse when a string column that represents a Ruby class is
-one of the components required for unique identification.
+Yeah but... [here’s a post about why this
+exists](https://waymondo.com/posts/are-exclusive-arcs-evil/).
 
 ### So how does this work?
 
