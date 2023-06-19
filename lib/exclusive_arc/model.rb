@@ -15,7 +15,9 @@ module ExclusiveArc
           next if reflections[option.to_s]
 
           belongs_to(option, optional: true)
+          validate "validate_#{arc}".to_sym
         end
+
         exclusive_arcs[arc] = Definition.new(
           reflections: reflections.slice(*belong_tos.map(&:to_s)),
           options: args[2] || {}
@@ -39,9 +41,11 @@ module ExclusiveArc
             assign_exclusive_arc(:#{arc}, polymorphic)
             @#{arc} = polymorphic
           end
-        RUBY
 
-        validate :validate_exclusive_arcs
+          def validate_#{arc}
+            validate_exclusive_arc(:#{arc})
+          end
+        RUBY
       end
     end
 
@@ -54,12 +58,11 @@ module ExclusiveArc
       assign_attributes attributes
     end
 
-    def validate_exclusive_arcs
-      exclusive_arcs.each do |(arc, definition)|
-        foreign_key_count = definition.reflections.keys.count { |name| !!public_send(name) }
-        valid = definition.options[:optional] ? foreign_key_count.in?([0, 1]) : foreign_key_count == 1
-        errors.add(arc, :arc_not_exclusive) unless valid
-      end
+    def validate_exclusive_arc(arc)
+      definition = exclusive_arcs.fetch(arc)
+      foreign_key_count = definition.reflections.keys.count { |name| !!public_send(name) }
+      valid = definition.options[:optional] ? foreign_key_count.in?([0, 1]) : foreign_key_count == 1
+      errors.add(arc, :arc_not_exclusive) unless valid
     end
   end
 end
