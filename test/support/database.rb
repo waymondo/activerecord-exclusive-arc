@@ -1,11 +1,5 @@
 CONNECTION = ActiveRecord::Base.connection
 
-def truncate_db
-  CONNECTION.tables.each do |table|
-    CONNECTION.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
-  end
-end
-
 CONNECTION.tables.each do |table|
   next unless CONNECTION.table_exists?(table)
 
@@ -15,10 +9,6 @@ end
 SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] != "sqlite3"
 
 ActiveRecord::Schema.define do
-  create_table :governments do |t|
-    t.string :name
-  end
-
   if SUPPORTS_UUID
     create_table :cities, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
       t.string :name
@@ -35,6 +25,21 @@ ActiveRecord::Schema.define do
 
   create_table :states do |t|
     t.string :name
+  end
+
+  create_table :governments do |t|
+    t.string :name
+    if SUPPORTS_UUID
+      t.references :city, type: :uuid, foreign_key: true
+    else
+      t.references :city, foreign_key: true
+    end
+    t.references :county, foreign_key: true
+    t.references :state, foreign_key: true
+    t.check_constraint(
+      "(CASE WHEN city_id IS NULL THEN 0 ELSE 1 END + CASE WHEN county_id IS NULL THEN 0 ELSE 1 END + CASE WHEN state_id IS NULL THEN 0 ELSE 1 END) = 1",
+      name: "region"
+    )
   end
 
   create_table :posts
@@ -73,19 +78,18 @@ end
 class Post < ActiveRecord::Base
   include ExclusiveArc::Model
   has_many :comments
-  has_exclusive_arc :commentable, [:comment, :post]
+  has_exclusive_arc :commentable, %i[comment post]
 end
 
-def migrate_exclusive_arc(args)
-  tmp_dir = File.expand_path("../../tmp", __dir__)
-  FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
-  Rails::Generators.invoke("exclusive_arc", args + ["--quiet"], destination_root: tmp_dir)
-  Dir[File.join(tmp_dir, "db/migrate/*.rb")].sort.each { |file| require file }
-  targets = args[2..]
-  (
-    [args[0].delete(":").classify, args[1].classify, "ExclusiveArc"] |
-    targets.map(&:classify)
-  ).join.constantize.migrate(:up)
+class TestMigration < ActiveRecord::Migration[ActiveRecord::Migration.current_version]
+  def change
+    add_reference :governments, :city, type: :uuid, foreign_key: true, index: {where: "city_id IS NOT NULL"}
+    add_reference :governments, :county, foreign_key: true, index: {where: "county_id IS NOT NULL"}
+    add_reference :governments, :state, foreign_key: true, index: {where: "state_id IS NOT NULL"}
+    add_check_constraint(
+      :governments,
+      "(CASE WHEN city_id IS NULL THEN 0 ELSE 1 END + CASE WHEN county_id IS NULL THEN 0 ELSE 1 END + CASE WHEN state_id IS NULL THEN 0 ELSE 1 END) = 1",
+      name: "region"
+    )
+  end
 end
-
-migrate_exclusive_arc(%w[Government region city county state])

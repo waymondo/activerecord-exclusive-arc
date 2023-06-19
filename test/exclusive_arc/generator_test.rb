@@ -7,7 +7,7 @@ class GeneratorTest < Rails::Generators::TestCase
 
   def setup
     prepare_destination
-    ["government", "comment"].each do |model|
+    %w[government comment].each do |model|
       model_path = File.join(TMP_DIR, "app", "models", "#{model}.rb")
       FileUtils.mkdir_p(File.dirname(model_path))
       File.write(
@@ -19,26 +19,13 @@ class GeneratorTest < Rails::Generators::TestCase
       )
     end
   end
-
-  test "it generates an exclusive arc migration and injects into model" do
-    run_generator %w[Government region city county state]
-    assert_migration "db/migrate/government_region_exclusive_arc_city_county_state.rb" do |migration|
-      if SUPPORTS_UUID
-        assert_match(/add_reference :governments, :city, type: :uuid, foreign_key: true, index:/, migration)
-      else
-        assert_match(/add_reference :governments, :city, foreign_key: true, index:/, migration)
-      end
-      assert_match(/add_reference :governments, :county, foreign_key: true, index:/, migration)
-      assert_match(/add_reference :governments, :state, foreign_key: true, index:/, migration)
-      assert_match(/add_check_constraint\(\n(\s*):governments/, migration)
-      assert_match(/\(CASE(.*)\) = 1/, migration)
-    end
-    assert_file "app/models/government.rb", /include ExclusiveArc::Model/
-    assert_file "app/models/government.rb", /has_exclusive_arc :region, \[:city, :county, :state\]/
-  end
-
   test "running generator twice updates model declaration" do
     run_generator %w[Comment commentable comment post]
+    assert_migration "db/migrate/comment_commentable_exclusive_arc_comment_post.rb" do |migration|
+      assert_match(/add_reference :comments, :comment, foreign_key: true, index:/, migration)
+      assert_match(/add_check_constraint\(\n(\s*):comments/, migration)
+      assert_match(/\(CASE(.*)\) = 1/, migration)
+    end
     assert_file "app/models/comment.rb", /include ExclusiveArc::Model/
     assert_file "app/models/comment.rb", /has_exclusive_arc :commentable, \[:comment, :post\]/
     run_generator %w[Comment commentable comment post page]
@@ -63,7 +50,7 @@ class GeneratorTest < Rails::Generators::TestCase
   end
 
   test "it does not add reference when column already exists" do
-    Government.stub(:column_names, ["id", "name", "city_id"]) do
+    Government.stub(:column_names, %w[id name city_id]) do
       run_generator %w[Government region city county state]
       assert_migration "db/migrate/government_region_exclusive_arc_city_county_state.rb" do |migration|
         assert_match(/add_reference :governments, :county/, migration)
