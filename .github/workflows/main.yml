@@ -13,7 +13,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
+        image: postgres:16
         env:
           POSTGRES_DB: exclusive_arc
           POSTGRES_PASSWORD: password
@@ -33,12 +33,13 @@ jobs:
         rails: 
           - 6.1
           - 7.0
+          - 7.1
         database_adapter:
           - sqlite3
           - postgresql
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         env: 
