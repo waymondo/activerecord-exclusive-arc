@@ -6,6 +6,8 @@ if (rails_version = ENV["RAILS_VERSION"])
 else
   gem "rails"
 end
+gem "pg"
+gem "sqlite3"
 gem "standard", "~> 1.26"
 
 gemspec
