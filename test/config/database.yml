@@ -1,10 +1,10 @@
+<% adapter = ENV.fetch('DATABASE_ADAPTER', "postgresql") %>
 default: &default
-  adapter: <%= ENV.fetch('DATABASE_ADAPTER', 'postgresql') %>
-  database: 'exclusive_arc'
-  host: 'localhost'
-  port: null
-  username: <%= ENV.fetch('DATABASE_USER', nil) %>
-  password: <%= ENV.fetch('DATABASE_PASSWORD', nil) %>
+  adapter: <%= adapter %>
+  database: exclusive_arc
+  host: localhost
+  username: <% if adapter == "trilogy" %>root<% else %>postgres<% end %>
+  password: <% if adapter == "trilogy" %>root<% end %>
 
 test:
   <<: *default
