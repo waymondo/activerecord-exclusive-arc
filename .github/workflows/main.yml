@@ -16,9 +16,8 @@ jobs:
         image: mysql:8
         env:
           MYSQL_DATABASE: exclusive_arc
-          MYSQL_ROOT_PASSWORD: password
-          DATABASE_USER: root
-          DATABASE_PASSWORD: password
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
         options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 10s
@@ -31,8 +30,6 @@ jobs:
         env:
           POSTGRES_DB: exclusive_arc
           POSTGRES_PASSWORD: password
-          DATABASE_USER: postgres
-          DATABASE_PASSWORD: password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -68,6 +65,8 @@ jobs:
         env:
           RAILS_ENV: test
           RAILS_VERSION: ${{ matrix.rails }}
+          DATABASE_USER: user
+          DATABASE_PASSWORD: password
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
         run: |
           bundle exec rake
