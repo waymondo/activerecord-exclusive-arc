@@ -16,6 +16,7 @@ jobs:
         image: mysql:8
         env:
           MYSQL_DATABASE: exclusive_arc
+          MYSQL_ROOT_PASSWORD: password
           DATABASE_USER: root
           DATABASE_PASSWORD: password
         options: >-
