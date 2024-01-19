@@ -12,11 +12,26 @@ jobs:
     name: Ruby ${{ matrix.ruby }}
 
     services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: exclusive_arc
+          DATABASE_USER: root
+          DATABASE_PASSWORD: password
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
       postgres:
         image: postgres:16
         env:
           POSTGRES_DB: exclusive_arc
           POSTGRES_PASSWORD: password
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -37,6 +52,7 @@ jobs:
         database_adapter:
           - sqlite3
           - postgresql
+          - trilogy
 
     steps:
       - uses: actions/checkout@v4
@@ -50,8 +66,6 @@ jobs:
       - name: Run the default task
         env:
           RAILS_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
           RAILS_VERSION: ${{ matrix.rails }}
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
         run: |
