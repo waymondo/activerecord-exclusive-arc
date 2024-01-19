@@ -15,7 +15,7 @@ module ExclusiveArc
           next if reflections[option.to_s]
 
           belongs_to(option, optional: true)
-          validate "validate_#{arc}".to_sym
+          validate :"validate_#{arc}"
         end
 
         exclusive_arcs[arc] = Definition.new(
