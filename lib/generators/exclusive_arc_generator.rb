@@ -128,6 +128,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def remove_check_constraint
+      return unless class_name.constantize.connection.supports_check_constraints?
       return if options[:skip_check_constraint]
       return unless existing_check_constraint&.expression
 
@@ -141,6 +142,7 @@ class ExclusiveArcGenerator < ActiveRecord::Generators::Base
     end
 
     def add_check_constraint
+      return unless class_name.constantize.connection.supports_check_constraints?
       return if options[:skip_check_constraint]
       <<-RUBY.chomp
     add_check_constraint(

@@ -17,7 +17,9 @@ jobs:
         env:
           MYSQL_DATABASE: exclusive_arc
           MYSQL_USER: user
+          MYSQL_USERNAME: user
           MYSQL_PASSWORD: password
+          MYSQL_ALLOW_EMPTY_PASSWORD: true
         options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 10s
