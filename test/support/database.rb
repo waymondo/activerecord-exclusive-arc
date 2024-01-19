@@ -6,7 +6,7 @@ CONNECTION.tables.each do |table|
   CONNECTION.drop_table(table, force: :cascade)
 end
 
-SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] != "sqlite3"
+SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] == "postgres"
 
 ActiveRecord::Schema.define do
   if SUPPORTS_UUID

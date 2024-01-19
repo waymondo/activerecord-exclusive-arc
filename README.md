@@ -160,7 +160,7 @@ end
 Currently `activerecord-exclusive-arc` is tested against a matrix of:
 * Ruby 2.7 and 3.3
 * Rails 6.1, 7.0, 7.1
-* `postgresql` and `sqlite3` database adapters
+* `postgresql`, `sqlite3`, and `trilogy` database adapters
 
 ### Contributing
 

@@ -13,11 +13,10 @@ jobs:
 
     services:
       mysql:
-        image: mysql:8
+        image: mysql:5.7
         env:
           MYSQL_DATABASE: exclusive_arc
           MYSQL_USER: user
-          MYSQL_USERNAME: user
           MYSQL_PASSWORD: password
           MYSQL_ALLOW_EMPTY_PASSWORD: true
         options: >-
