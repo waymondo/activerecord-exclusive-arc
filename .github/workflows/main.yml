@@ -34,6 +34,7 @@ jobs:
           sudo systemctl start mysql.service
           sudo mysql -u root --password=root -e "CREATE DATABASE exclusive_arc"
           sudo mysql -u root --password=root -e "CREATE USER 'runner'@'localhost' IDENTIFIED BY 'runner'"
+          sudo mysql -u root --password=root -e "GRANT ALL ON exclusive_arc.* TO 'runner'@'localhost';"
 
       - name: "setup postgres"
         if: ${{ matrix.database_adapter == 'postgresql' }}
@@ -59,5 +60,4 @@ jobs:
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
           
         run: |
-          echo $DATABASE_URL
           bundle exec rake
