@@ -24,8 +24,10 @@ class GeneratorTest < Rails::Generators::TestCase
     run_generator %w[Comment commentable comment post]
     assert_migration "db/migrate/comment_commentable_exclusive_arc_comment_post.rb" do |migration|
       assert_match(/add_reference :comments, :comment, foreign_key: true, index:/, migration)
-      assert_match(/add_check_constraint\(\n(\s*):comments/, migration)
-      assert_match(/\(CASE(.*)\) = 1/, migration)
+      if ActiveRecord::Base.connection.supports_check_constraints?
+        assert_match(/add_check_constraint\(\n(\s*):comments/, migration)
+        assert_match(/\(CASE(.*)\) = 1/, migration)
+      end
     end
     assert_file "app/models/comment.rb", /include ExclusiveArc::Model/
     assert_file "app/models/comment.rb", /has_exclusive_arc :commentable, \[:comment, :post\]/
@@ -35,12 +37,17 @@ class GeneratorTest < Rails::Generators::TestCase
     assert_file "app/models/comment.rb" do |file|
       refute_match(/has_exclusive_arc :commentable, \[:comment, ::post\]/, file)
     end
-    skip "fix this"
+
+    # TODO: fix
+    return if ActiveRecord.version < Gem::Version.new("7")
+
     assert_migration "db/migrate/comment_commentable_exclusive_arc_comment_post_page.rb" do |migration|
       assert_match(/add_reference :comments, :comment/, migration)
       refute_match(/add_reference :comments, :post/, migration)
-      assert_match(/remove_check_constraint\(\n(\s*):comments/, migration)
-      assert_match(/add_check_constraint\(\n(\s*):comments/, migration)
+      if ActiveRecord::Base.connection.supports_check_constraints?
+        assert_match(/remove_check_constraint\(\n(\s*):comments/, migration)
+        assert_match(/add_check_constraint\(\n(\s*):comments/, migration)
+      end
     end
   end
 

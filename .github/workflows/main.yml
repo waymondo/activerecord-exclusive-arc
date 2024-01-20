@@ -9,21 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: exclusive_arc
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    name: Ruby ${{ matrix.ruby }} / Rails ${{ matrix.rails }} / Adapter ${{ matrix.database_adapter }}
 
     strategy:
       matrix:
@@ -37,9 +23,26 @@ jobs:
         database_adapter:
           - sqlite3
           - postgresql
+          - mysql2
 
     steps:
       - uses: actions/checkout@v4
+      
+      - name: "setup mysql"
+        if: ${{ matrix.database_adapter == 'mysql2' }}
+        run: |
+          sudo systemctl start mysql.service
+          sudo mysql -u root --password=root -e "CREATE DATABASE exclusive_arc"
+          sudo mysql -u root --password=root -e "CREATE USER 'runner'@'localhost' IDENTIFIED BY 'runner'"
+          sudo mysql -u root --password=root -e "GRANT ALL ON exclusive_arc.* TO 'runner'@'localhost';"
+
+      - name: "setup postgres"
+        if: ${{ matrix.database_adapter == 'postgresql' }}
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "CREATE USER runner WITH SUPERUSER PASSWORD 'runner'"
+          sudo -u postgres createdb exclusive_arc
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         env: 
@@ -47,12 +50,14 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          
       - name: Run the default task
         env:
           RAILS_ENV: test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
           RAILS_VERSION: ${{ matrix.rails }}
+          DATABASE_USER: runner
+          DATABASE_PASSWORD: runner
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
+          
         run: |
           bundle exec rake

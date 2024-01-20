@@ -1,10 +1,11 @@
 ENV["RAILS_ENV"] ||= "test"
 
 require "bundler/setup"
+
 require "debug"
-require "rails"
 require "minitest/autorun"
 require "minitest/spec"
+require "active_support"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "activerecord-exclusive-arc"

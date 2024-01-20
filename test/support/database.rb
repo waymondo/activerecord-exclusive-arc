@@ -6,7 +6,7 @@ CONNECTION.tables.each do |table|
   CONNECTION.drop_table(table, force: :cascade)
 end
 
-SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] != "sqlite3"
+SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] == "postgresql"
 
 ActiveRecord::Schema.define do
   if SUPPORTS_UUID
@@ -83,9 +83,15 @@ end
 
 class TestMigration < ActiveRecord::Migration[ActiveRecord::Migration.current_version]
   def change
-    add_reference :governments, :city, type: :uuid, foreign_key: true, index: {where: "city_id IS NOT NULL"}
+    if SUPPORTS_UUID
+      add_reference :governments, :city, type: :uuid, foreign_key: true, index: {where: "city_id IS NOT NULL"}
+    else
+      add_reference :governments, :city, foreign_key: true, index: {where: "city_id IS NOT NULL"}
+    end
     add_reference :governments, :county, foreign_key: true, index: {where: "county_id IS NOT NULL"}
     add_reference :governments, :state, foreign_key: true, index: {where: "state_id IS NOT NULL"}
+
+    return unless ActiveRecord::Base.connection.supports_check_constraints?
     add_check_constraint(
       :governments,
       "(CASE WHEN city_id IS NULL THEN 0 ELSE 1 END + CASE WHEN county_id IS NULL THEN 0 ELSE 1 END + CASE WHEN state_id IS NULL THEN 0 ELSE 1 END) = 1",

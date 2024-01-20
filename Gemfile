@@ -9,5 +9,6 @@ end
 gem "pg"
 gem "sqlite3"
 gem "standard", "~> 1.26"
+gem "mysql2"
 
 gemspec
