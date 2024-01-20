@@ -23,25 +23,25 @@ jobs:
         database_adapter:
           - sqlite3
           - postgresql
-          - trilogy
+          - mysql2
 
     steps:
       - uses: actions/checkout@v4
       
       - name: "setup mysql"
-        if: ${{ matrix.database_adapter == 'trilogy' }}
+        if: ${{ matrix.database_adapter == 'mysql2' }}
         run: |
           sudo systemctl start mysql.service
-          sudo mysql -u root --password=root -e 'create database exclusive_arc'
+          sudo mysql -u root --password=root -e "CREATE DATABASE exclusive_arc"
+          sudo mysql -u root --password=root -e "CREATE USER 'runner'@'localhost' IDENTIFIED BY 'runner'"
 
       - name: "setup postgres"
         if: ${{ matrix.database_adapter == 'postgresql' }}
-        env:
-          DATABASE_USER: postgres
         run: |
           sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "CREATE USER runner WITH SUPERUSER PASSWORD 'runner'"
           sudo -u postgres createdb exclusive_arc
-          
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         env: 
@@ -54,7 +54,10 @@ jobs:
         env:
           RAILS_ENV: test
           RAILS_VERSION: ${{ matrix.rails }}
+          DATABASE_USER: runner
+          DATABASE_PASSWORD: runner
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
           
         run: |
+          echo $DATABASE_URL
           bundle exec rake
