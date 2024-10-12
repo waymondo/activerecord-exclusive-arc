@@ -24,8 +24,8 @@ jobs:
           - "8.0.0.beta1"
         database_adapter:
           - sqlite3
-          # - postgresql
-          # - mysql2
+          - postgresql
+          - mysql2
 
     steps:
       - uses: actions/checkout@v4
