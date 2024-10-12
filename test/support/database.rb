@@ -1,9 +1,9 @@
 CONNECTION = ActiveRecord::Base.connection
 
-CONNECTION.tables.each do |table|
-  next unless CONNECTION.table_exists?(table)
-
-  CONNECTION.drop_table(table, force: :cascade)
+CONNECTION.disable_referential_integrity do
+  CONNECTION.tables.each do |table|
+    CONNECTION.drop_table(table, force: :cascade)
+  end
 end
 
 SUPPORTS_UUID = ENV["DATABASE_ADAPTER"] == "postgresql"

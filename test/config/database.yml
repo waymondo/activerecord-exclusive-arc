@@ -1,9 +1,6 @@
-default: &default
-  adapter: <%= ENV.fetch("DATABASE_ADAPTER", "postgresql") %>
+test: 
+  adapter: postgresql
   database: exclusive_arc
   host: 127.0.0.1
   username: <%= ENV.fetch("DATABASE_USER", nil) %>
   password: <%= ENV.fetch("DATABASE_PASSWORD", nil) %>
-
-test:
-  <<: *default
