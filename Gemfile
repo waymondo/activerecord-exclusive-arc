@@ -7,7 +7,7 @@ else
   gem "rails"
 end
 gem "pg"
-gem "sqlite3"
+gem "sqlite3", "~> 2.1"
 gem "standard", "~> 1.26"
 gem "mysql2"
 
