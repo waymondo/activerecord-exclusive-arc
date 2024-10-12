@@ -52,9 +52,9 @@ jobs:
         uses: ruby/setup-ruby@v1
         env: 
           RAILS_VERSION: ${{ matrix.rails }}
+          DATABASE_ADAPTER: ${{ matrix.database_adapter }}
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
           
       - name: Run the default task
         env:
