@@ -15,11 +15,16 @@ jobs:
       matrix:
         ruby:
           - "3.3"
-          - "2.7"
         rails: 
           - "6.1"
-          - "7.0"
-          - "7.1"
+          - "7.0.8.4"
+          - "7.1.4"
+          - "7.2.1"
+        include:
+          - rails: "6.1"
+            ruby: "2.7"
+          - rails: "8.0.0.beta1"
+            ruby: "3.3"
         database_adapter:
           - sqlite3
           - postgresql
