@@ -1,5 +1,5 @@
 test: 
-  adapter: postgresql
+  adapter: <%= ENV.fetch("DATABASE_ADAPTER") %>
   database: exclusive_arc
   host: 127.0.0.1
   username: <%= ENV.fetch("DATABASE_USER", nil) %>
