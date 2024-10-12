@@ -11,7 +11,7 @@ end
 
 case ENV["DATABASE_ADAPTER"]
 when "sqlite3"
-  gem "sqlite3", "~> 2.1.0"
+  gem "sqlite3", (ENV["RAILS_VERSION"] >= Gem::Version.new("7.3")) ? ">= 2.1" : "~> 1.4"
 when "postgresql"
   gem "pg"
 when "mysql2"
