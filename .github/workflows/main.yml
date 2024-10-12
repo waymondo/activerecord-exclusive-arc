@@ -14,17 +14,14 @@ jobs:
     strategy:
       matrix:
         ruby:
+          - "3.2"
           - "3.3"
         rails: 
           - "6.1.7"
           - "7.0.8"
           - "7.1.4"
           - "7.2.1"
-        include:
-          - rails: "6.1"
-            ruby: "2.7"
-          - rails: "8.0.0.beta1"
-            ruby: "3.3"
+          - "8.0.0.beta1"
         database_adapter:
           - sqlite3
           - postgresql
@@ -55,6 +52,8 @@ jobs:
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          cache-version: 1
           
       - name: Run the default task
         env:
@@ -65,5 +64,4 @@ jobs:
           DATABASE_ADAPTER: ${{ matrix.database_adapter }}
           
         run: |
-          bundle install
           bundle exec rake
