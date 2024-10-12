@@ -11,7 +11,7 @@ end
 
 case ENV["DATABASE_ADAPTER"]
 when "sqlite3"
-  gem "sqlite3"
+  gem "sqlite3", "~> 2.1.0"
 when "postgresql"
   gem "pg"
 when "mysql2"
